@@ -3,7 +3,57 @@ local M = {}
 ---@param line string -- The raw line from the crontab
 ---@return table      -- A table containing the parsed cron line
 --- - error string:   An error message
---- - success string: The parsed cron expression
+--- - success table: The parsed cron expression
+---   - reboot bool: If the cron line is a reboot command
+---   - minute table: The parsed minute can either be `value`, `step`, `separator`, or `range`
+---     - value string: The minute value
+---     - step table: A table containing the parsed step value
+---         - base string: The base value (e.g., "*")
+---         - step number: The step value (e.g., "2")
+---     - separator table: A table containing the parsed separator value
+---     - range table: A table containing the parsed range value
+---         - from number: The starting value (e.g., "1")
+---         - to number: The ending value (e.g., "5")
+---
+---   - hour table: The parsed hour can either be `value`, `step`, `separator`, or `range`
+---     - value string: The minute value
+---     - step table: A table containing the parsed step value
+---         - base string: The base value (e.g., "*")
+---         - step number: The step value (e.g., "2")
+---     - separator table: A table containing the parsed separator value
+---     - range table: A table containing the parsed range value
+---         - from number: The starting value (e.g., "1")
+---         - to number: The ending value (e.g., "5")
+---
+---   - day_of_month table: The parsed day of month can either be `value`, `step`, `separator`, or `range`
+---     - value string: The minute value
+---     - step table: A table containing the parsed step value
+---         - base string: The base value (e.g., "*")
+---         - step number: The step value (e.g., "2")
+---     - separator table: A table containing the parsed separator value
+---     - range table: A table containing the parsed range value
+---         - from number: The starting value (e.g., "1")
+---         - to number: The ending value (e.g., "5")
+---
+---   - month table: The parsed month can either be `value`, `step`, `separator`, or `range`
+---     - value string: The minute value
+---     - step table: A table containing the parsed step value
+---         - base string: The base value (e.g., "*")
+---         - step number: The step value (e.g., "2")
+---     - separator table: A table containing the parsed separator value
+---     - range table: A table containing the parsed range value
+---         - from number: The starting value (e.g., "1")
+---         - to number: The ending value (e.g., "5")
+---
+---   - day_of_week table: The parsed day of week can either be `value`, `step`, `separator`, or `range`
+---     - value string: The minute value
+---     - step table: A table containing the parsed step value
+---         - base string: The base value (e.g., "*")
+---         - step number: The step value (e.g., "2")
+---     - separator table: A table containing the parsed separator value
+---     - range table: A table containing the parsed range value
+---         - from number: The starting value (e.g., "1")
+---         - to number: The ending value (e.g., "5")
 function M.parse_cron_line(line)
     local parts = {}
 
@@ -11,7 +61,6 @@ function M.parse_cron_line(line)
         local result = parse_special_commands(line)
 
         if result.success then line = result.success end
-
         if result.error then return { error = result.error } end
     end
 
@@ -20,6 +69,13 @@ function M.parse_cron_line(line)
     end
 
     if #parts < 1 then return { error = "Missing <minute> [0-59]" } end
+
+    local result = check_actions(parts[1])
+    if result.no_step then
+    end
+    if result.error then return { error = result.error } end
+    local minute = result.success
+
     if #parts < 2 then return { error = "Missing <hour> [0-23]" } end
 
     if parts[1] == "@reboot" then
@@ -36,7 +92,7 @@ function M.parse_cron_line(line)
 
     return {
         success = {
-            minute = parts[1],
+            minute = minute,
             hour = parts[2],
             day_of_month = parts[3],
             month = parts[4],
@@ -74,6 +130,56 @@ function parse_special_commands(line)
     else
         return { error = "Unknown special command: " .. words[1] }
     end
+end
+
+---@param word string -- The word to check
+---@return table -- A table containing actions `step`, `separator`, `range`, `error`, or `nothing`:
+---  - error string: An error message if the word is not a valid step value
+---  - nothing bool: If the word does not contain a action
+---  - step table: A table containing the parsed step value
+---    - base string: The base value (e.g., "*")
+---    - step number: The step value (e.g., "2")
+--- - separator table: A table containing the parsed separator value
+--- - range table: A table containing the parsed range value
+---    - from number: The starting value (e.g., "1")
+---    - to number: The ending value (e.g., "5")
+---
+function check_actions(word)
+    local result = check_step(word)
+    if result == nil then print "No step value found" end
+    if result.error then return { error = result.error } end
+
+    if result.success then
+        return {
+            step = {
+                base = result.success.base,
+                step = result.success.step,
+            },
+        }
+    end
+end
+
+function check_step(word)
+    -- check for step
+    local parts = {}
+    for part in string.gmatch(word, "([^/]+)") do
+        table.insert(parts, part)
+    end
+
+    if #parts == 0 then return nil end
+
+    if #parts > 2 then return { error = "Invalid: Can not have multiple step values" } end
+
+    if parts[1] ~= "*" then return { error = "Invalid: Step value must be preceded by a *" } end
+
+    if type(parts[2]) ~= number then return { error = "Invalid: Step value must be a number" } end
+
+    return {
+        success = {
+            base = parts[1],
+            step = parts[2],
+        },
+    }
 end
 
 return M

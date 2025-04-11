@@ -127,6 +127,93 @@ describe("Parse special commands", function()
     end)
 end)
 
+describe("Parse step", function()
+    it("minute step", function()
+        local line = "*/2 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("*/2", success.minute)
+        assert.is_equal("*", success.hour)
+        assert.is_equal("*", success.day_of_month)
+        assert.is_equal("*", success.month)
+        assert.is_equal("*", success.day_of_week)
+        assert.is_equal("some_command.sh", success.command)
+    end)
+
+    it("minute step", function()
+        local line = "*/ * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+
+        local error = parsed.error
+        assert.is_equal("Missing frequency", error)
+    end)
+
+    it("hour step", function()
+        local line = "* */2 * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("*", success.minute)
+        assert.is_equal("*/2", success.hour)
+        assert.is_equal("*", success.day_of_month)
+        assert.is_equal("*", success.month)
+        assert.is_equal("*", success.day_of_week)
+        assert.is_equal("some_command.sh", success.command)
+    end)
+
+    it("day_of_month step", function()
+        local line = "* * */2 * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("*", success.minute)
+        assert.is_equal("*", success.hour)
+        assert.is_equal("*/2", success.day_of_month)
+        assert.is_equal("*", success.month)
+        assert.is_equal("*", success.day_of_week)
+        assert.is_equal("some_command.sh", success.command)
+    end)
+
+    it("month step", function()
+        local line = "* * * */2 * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("*", success.minute)
+        assert.is_equal("*", success.hour)
+        assert.is_equal("*", success.day_of_month)
+        assert.is_equal("*/2", success.month)
+        assert.is_equal("*", success.day_of_week)
+        assert.is_equal("some_command.sh", success.command)
+    end)
+
+    it("month step", function()
+        local line = "* * * * */2 some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("*", success.minute)
+        assert.is_equal("*", success.hour)
+        assert.is_equal("*", success.day_of_month)
+        assert.is_equal("*", success.month)
+        assert.is_equal("*/2", success.day_of_week)
+        assert.is_equal("some_command.sh", success.command)
+    end)
+end)
+
 describe("Describe time", function()
     it("nil", function()
         local cron = {}
