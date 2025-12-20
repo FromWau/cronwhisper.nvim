@@ -47,7 +47,7 @@ describe("Parse hour", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid hour value. Must be between 0 and 59.", error)
+        assert.is_equal("Invalid hour value. Must be between 0 and 23.", error)
     end)
 
     it("too high", function()
@@ -57,7 +57,7 @@ describe("Parse hour", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid hour value. Must be between 0 and 59.", error)
+        assert.is_equal("Invalid hour value. Must be between 0 and 23.", error)
     end)
 end)
 
@@ -326,7 +326,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("minute step base not set", function()
@@ -336,7 +336,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("minute step multiple steps", function()
@@ -372,7 +372,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("hour step base not set", function()
@@ -382,7 +382,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("hour step multiple steps", function()
@@ -418,7 +418,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("day_of_month step base not set", function()
@@ -428,7 +428,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("day_of_month step multiple steps", function()
@@ -464,7 +464,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("month step base not set", function()
@@ -474,7 +474,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("month step multiple steps", function()
@@ -510,7 +510,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("day_of_week step base not set", function()
@@ -520,7 +520,7 @@ describe("Parse step", function()
         assert.is_nil(parsed.success)
 
         local error = parsed.error
-        assert.is_equal("Invalid: Step value must be preceded by a *", error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", error)
     end)
 
     it("day_of_week step multiple steps", function()
@@ -531,6 +531,777 @@ describe("Parse step", function()
 
         local error = parsed.error
         assert.is_equal("Invalid: Can not have multiple step values", error)
+    end)
+end)
+
+describe("Parse range", function()
+    it("minute range", function()
+        local line = "1-5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.range)
+        assert.is_equal("1", success.minute.range.from)
+        assert.is_equal("5", success.minute.range.to)
+        assert.is_equal("*", success.hour.value)
+        assert.is_equal("some_command.sh", success.command)
+    end)
+
+    it("hour range", function()
+        local line = "* 9-17 * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("*", success.minute.value)
+        assert.is_not_nil(success.hour.range)
+        assert.is_equal("9", success.hour.range.from)
+        assert.is_equal("17", success.hour.range.to)
+    end)
+
+    it("day_of_month range", function()
+        local line = "* * 1-15 * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_month.range)
+        assert.is_equal("1", success.day_of_month.range.from)
+        assert.is_equal("15", success.day_of_month.range.to)
+    end)
+
+    it("month range numeric", function()
+        local line = "* * * 1-6 * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.month.range)
+        assert.is_equal("1", success.month.range.from)
+        assert.is_equal("6", success.month.range.to)
+    end)
+
+    it("month range named", function()
+        local line = "* * * JAN-JUN * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.month.range)
+        assert.is_equal("JAN", success.month.range.from)
+        assert.is_equal("JUN", success.month.range.to)
+    end)
+
+    it("day_of_week range numeric", function()
+        local line = "* * * * 1-5 some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.range)
+        assert.is_equal("1", success.day_of_week.range.from)
+        assert.is_equal("5", success.day_of_week.range.to)
+    end)
+
+    it("day_of_week range named", function()
+        local line = "* * * * MON-FRI some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.range)
+        assert.is_equal("MON", success.day_of_week.range.from)
+        assert.is_equal("FRI", success.day_of_week.range.to)
+    end)
+
+    it("invalid range - reversed", function()
+        local line = "5-1 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+
+        local error = parsed.error
+        assert.is_equal("Invalid: Range start must be less than or equal to end", error)
+    end)
+
+    it("invalid range - same value", function()
+        local line = "5-5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.range)
+        assert.is_equal("5", success.minute.range.from)
+        assert.is_equal("5", success.minute.range.to)
+    end)
+
+    it("invalid range - out of bounds minute", function()
+        local line = "50-70 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+end)
+
+describe("Parse list/separator", function()
+    it("minute list", function()
+        local line = "0,15,30,45 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.list)
+        assert.is_equal(4, #success.minute.list)
+        assert.is_equal("0", success.minute.list[1])
+        assert.is_equal("15", success.minute.list[2])
+        assert.is_equal("30", success.minute.list[3])
+        assert.is_equal("45", success.minute.list[4])
+    end)
+
+    it("hour list", function()
+        local line = "* 9,12,15,18 * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.hour.list)
+        assert.is_equal(4, #success.hour.list)
+    end)
+
+    it("day_of_week list named", function()
+        local line = "* * * * MON,WED,FRI some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.list)
+        assert.is_equal(3, #success.day_of_week.list)
+        assert.is_equal("MON", success.day_of_week.list[1])
+        assert.is_equal("WED", success.day_of_week.list[2])
+        assert.is_equal("FRI", success.day_of_week.list[3])
+    end)
+
+    it("month list mixed", function()
+        local line = "* * * 1,JUN,12 * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.month.list)
+        assert.is_equal("1", success.month.list[1])
+        assert.is_equal("JUN", success.month.list[2])
+        assert.is_equal("12", success.month.list[3])
+    end)
+
+    it("single value not a list", function()
+        local line = "5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_nil(success.minute.list)
+        assert.is_not_nil(success.minute.value)
+        assert.is_equal("5", success.minute.value)
+    end)
+
+    it("list with ranges", function()
+        local line = "1-5,10,15-20 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.list)
+        assert.is_equal(3, #success.minute.list)
+        assert.is_equal("1-5", success.minute.list[1])
+        assert.is_equal("10", success.minute.list[2])
+        assert.is_equal("15-20", success.minute.list[3])
+    end)
+
+    it("invalid list - empty value", function()
+        local line = "1,,5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+
+        local error = parsed.error
+        assert.is_equal("Invalid: List contains empty values", error)
+    end)
+
+    it("invalid list - trailing comma", function()
+        local line = "1,5, * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+
+        local error = parsed.error
+        assert.is_equal("Invalid: List contains empty values", error)
+    end)
+end)
+
+describe("Parse advanced steps", function()
+    it("minute range step", function()
+        local line = "10-50/5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.step)
+        assert.is_equal("10-50", success.minute.step.base)
+        assert.is_equal("5", success.minute.step.step)
+    end)
+
+    it("hour range step", function()
+        local line = "* 9-17/2 * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.hour.step)
+        assert.is_equal("9-17", success.hour.step.base)
+        assert.is_equal("2", success.hour.step.step)
+    end)
+
+    it("day_of_week range step named", function()
+        local line = "* * * * MON-FRI/2 some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.step)
+        assert.is_equal("MON-FRI", success.day_of_week.step.base)
+        assert.is_equal("2", success.day_of_week.step.step)
+    end)
+end)
+
+describe("Describe step fields", function()
+    it("every 5 minutes", function()
+        local line = "*/5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At every 5 minutes", desc)
+    end)
+
+    it("every 2 hours", function()
+        local line = "0 */2 * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At minute 0 past every 2 hours", desc)
+    end)
+
+    it("every 5 minutes from 10 through 50", function()
+        local line = "10-50/5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At every 5 minutes from 10 through 50", desc)
+    end)
+end)
+
+describe("Describe range fields", function()
+    it("minutes 1 through 5", function()
+        local line = "1-5 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At every minute from 1 through 5", desc)
+    end)
+
+    it("hours 9 through 17", function()
+        local line = "0 9-17 * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At minute 0 past every hour from 9 through 17", desc)
+    end)
+
+    it("Monday through Friday", function()
+        local line = "0 9 * * MON-FRI some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At 09:00 on every day-of-week from Monday through Friday", desc)
+    end)
+end)
+
+describe("Describe list fields", function()
+    it("at minutes 0, 15, 30, and 45", function()
+        local line = "0,15,30,45 * * * * some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At minutes 0, 15, 30, and 45", desc)
+    end)
+
+    it("on Monday, Wednesday, and Friday", function()
+        local line = "0 9 * * MON,WED,FRI some_command.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At 09:00 on Monday, Wednesday, and Friday", desc)
+    end)
+end)
+
+describe("Complex feature combinations", function()
+    -- Lists with ranges
+    it("list containing ranges - minutes", function()
+        local line = "0-10,20-30,45,50-59 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.list)
+        assert.is_equal(4, #success.minute.list)
+        assert.is_equal("0-10", success.minute.list[1])
+        assert.is_equal("20-30", success.minute.list[2])
+        assert.is_equal("45", success.minute.list[3])
+        assert.is_equal("50-59", success.minute.list[4])
+    end)
+
+    it("list with mixed numeric and named months", function()
+        local line = "0 0 1 1,MAR,6,SEP,12 * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.month.list)
+        assert.is_equal("1", success.month.list[1])
+        assert.is_equal("MAR", success.month.list[2])
+        assert.is_equal("6", success.month.list[3])
+        assert.is_equal("SEP", success.month.list[4])
+    end)
+
+    it("list with ranges in day of week", function()
+        local line = "0 9 * * MON-WED,FRI,SAT-SUN cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.list)
+        assert.is_equal(3, #success.day_of_week.list)
+    end)
+
+    -- Multiple fields with complex patterns
+    it("step in minutes and range in hours", function()
+        local line = "*/15 9-17 * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.step)
+        assert.is_equal("*", success.minute.step.base)
+        assert.is_equal("15", success.minute.step.step)
+        assert.is_not_nil(success.hour.range)
+        assert.is_equal("9", success.hour.range.from)
+        assert.is_equal("17", success.hour.range.to)
+    end)
+
+    it("range step in minutes, list in hours", function()
+        local line = "0-30/5 8,12,16,20 * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.step)
+        assert.is_equal("0-30", success.minute.step.base)
+        assert.is_not_nil(success.hour.list)
+        assert.is_equal(4, #success.hour.list)
+    end)
+
+    it("all fields with different complex patterns", function()
+        local line = "*/10 8-18/2 1-15 JAN,JUL MON-FRI cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.step)
+        assert.is_not_nil(success.hour.step)
+        assert.is_not_nil(success.day_of_month.range)
+        assert.is_not_nil(success.month.list)
+        assert.is_not_nil(success.day_of_week.range)
+    end)
+end)
+
+describe("Real-world cron examples", function()
+    it("backup every day at 2:30 AM", function()
+        local line = "30 2 * * * /usr/bin/backup.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At 02:30", desc)
+    end)
+
+    it("cleanup every 6 hours", function()
+        local line = "0 */6 * * * /usr/bin/cleanup.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At minute 0 past every 6 hours", desc)
+    end)
+
+    it("business hours monitoring - every 5 min Mon-Fri 9am-5pm", function()
+        local line = "*/5 9-17 * * MON-FRI /usr/bin/monitor.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.step)
+        assert.is_not_nil(success.hour.range)
+        assert.is_not_nil(success.day_of_week.range)
+    end)
+
+    it("quarterly report - first day of Jan, Apr, Jul, Oct", function()
+        local line = "0 0 1 JAN,APR,JUL,OCT * /usr/bin/quarterly.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+
+        local success = parsed.success
+        assert.is_equal("0", success.minute.value)
+        assert.is_equal("0", success.hour.value)
+        assert.is_equal("1", success.day_of_month.value)
+        assert.is_not_nil(success.month.list)
+    end)
+
+    it("weekend batch job - 3am on Sat and Sun", function()
+        local line = "0 3 * * SAT,SUN /usr/bin/batch.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.list)
+        assert.is_equal(2, #success.day_of_week.list)
+    end)
+
+    it("office hours - every 15 min 8am-6pm weekdays", function()
+        local line = "*/15 8-18 * * 1-5 /usr/bin/office.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+    end)
+
+    it("first and fifteenth of month", function()
+        local line = "0 9 1,15 * * /usr/bin/payroll.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_month.list)
+        assert.is_equal("1", success.day_of_month.list[1])
+        assert.is_equal("15", success.day_of_month.list[2])
+    end)
+
+    it("every 2 hours during business days", function()
+        local line = "0 8-18/2 * * MON-FRI /usr/bin/sync.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.hour.step)
+        assert.is_equal("8-18", success.hour.step.base)
+        assert.is_equal("2", success.hour.step.step)
+    end)
+
+    it("maintenance window - weeknights 11pm-5am every 30 min", function()
+        local line = "*/30 23,0-5 * * MON-FRI /usr/bin/maint.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_not_nil(parsed.success)
+    end)
+end)
+
+describe("Edge cases and boundaries", function()
+    it("midnight exactly", function()
+        local line = "0 0 * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At 00:00", desc)
+    end)
+
+    it("last minute of day", function()
+        local line = "59 23 * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_equal("23", parsed.success.hour.value)
+        assert.is_equal("59", parsed.success.minute.value)
+    end)
+
+    it("last day of month", function()
+        local line = "0 0 31 * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_equal("31", parsed.success.day_of_month.value)
+    end)
+
+    it("December range", function()
+        local line = "0 0 * 11-12 * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.month.range)
+        assert.is_equal("11", success.month.range.from)
+        assert.is_equal("12", success.month.range.to)
+    end)
+
+    it("Sunday as 0", function()
+        local line = "0 0 * * 0 cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_equal("0", parsed.success.day_of_week.value)
+    end)
+
+    it("Sunday as 7", function()
+        local line = "0 0 * * 7 cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+        assert.is_equal("7", parsed.success.day_of_week.value)
+    end)
+
+    it("range wrapping Sunday (0-1 means Sun-Mon)", function()
+        local line = "0 0 * * 0-1 cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.range)
+        assert.is_equal("0", success.day_of_week.range.from)
+        assert.is_equal("1", success.day_of_week.range.to)
+    end)
+
+    it("every minute", function()
+        local line = "* * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local desc = describer.describe(parsed.success)
+        assert.is_equal("At every minute", desc)
+    end)
+
+    it("minimum step - every 1 minute", function()
+        local line = "*/1 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.step)
+        assert.is_equal("1", success.minute.step.step)
+    end)
+
+    it("maximum step - every 59 minutes", function()
+        local line = "*/59 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_equal("59", success.minute.step.step)
+    end)
+
+    it("single value in list", function()
+        local line = "5 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_nil(success.minute.list)
+        assert.is_not_nil(success.minute.value)
+    end)
+
+    it("range of same value", function()
+        local line = "5-5 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.range)
+        assert.is_equal("5", success.minute.range.from)
+        assert.is_equal("5", success.minute.range.to)
+    end)
+
+    it("full range - all minutes", function()
+        local line = "0-59 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.minute.range)
+        assert.is_equal("0", success.minute.range.from)
+        assert.is_equal("59", success.minute.range.to)
+    end)
+
+    it("full range - all hours", function()
+        local line = "0 0-23 * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.hour.range)
+    end)
+
+    it("full range - all days of month", function()
+        local line = "0 0 1-31 * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_month.range)
+    end)
+
+    it("all months as range", function()
+        local line = "0 0 1 JAN-DEC * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.month.range)
+    end)
+
+    it("all weekdays", function()
+        local line = "0 0 * * MON-FRI cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_nil(parsed.error)
+
+        local success = parsed.success
+        assert.is_not_nil(success.day_of_week.range)
+    end)
+end)
+
+describe("Error cases and validation", function()
+    it("minute out of range - too high", function()
+        local line = "60 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("hour out of range - too high", function()
+        local line = "0 24 * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("day of month zero", function()
+        local line = "0 0 0 * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("day of month too high", function()
+        local line = "0 0 32 * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("month zero", function()
+        local line = "0 0 1 0 * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("month too high", function()
+        local line = "0 0 1 13 * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("day of week too high", function()
+        local line = "0 0 * * 8 cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("invalid month name", function()
+        local line = "0 0 1 XYZ * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("invalid day name", function()
+        local line = "0 0 * * XYZ cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("range with from > to", function()
+        local line = "50-10 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+        assert.is_equal("Invalid: Range start must be less than or equal to end", parsed.error)
+    end)
+
+    it("list with empty value", function()
+        local line = "1,,5 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_equal("Invalid: List contains empty values", parsed.error)
+    end)
+
+    it("list with trailing comma", function()
+        local line = "1,5, * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_equal("Invalid: List contains empty values", parsed.error)
+    end)
+
+    it("range in list with invalid values", function()
+        local line = "1-70,5 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
+    end)
+
+    it("step with invalid base", function()
+        local line = "5/10 * * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_equal("Invalid: Step value must be preceded by a * or a range", parsed.error)
+    end)
+
+    it("too few fields", function()
+        local line = "* * * * cmd.sh"
+        local parsed = parser.parse_cron_line(line)
+        assert.is_not_nil(parsed.error)
+        assert.is_nil(parsed.success)
     end)
 end)
 

@@ -1,0 +1,18 @@
+return {
+  _all = {
+    -- Set Lua path to find modules in lua/ directory
+    lua = "lua",
+    -- Configure Lua path to include ./lua directory
+    lpath = "./lua/?.lua;./lua/?/init.lua",
+  },
+  default = {
+    -- Test files in lua/ directory
+    ROOT = { "lua/" },
+    -- Match test.lua instead of default _spec.lua pattern
+    pattern = "test%.lua$",
+    -- Verbose output
+    verbose = true,
+    -- Suppress pending tests output
+    suppress_pending = false,
+  },
+}
