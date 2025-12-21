@@ -1,4 +1,5 @@
 local utils = require "utils"
+local validator = require "cronwhisper.validator"
 
 local M = {}
 
@@ -14,17 +15,33 @@ function M.describe(obj)
     if obj["reboot"] then return "After rebooting" end
 
     -- Check for remaining fields
-    if obj["minute"] == nil then return "Missing <minute> [1-59]" end
-    if obj["hour"] == nil then return "Missing <hour> [0-23]" end
-    if obj["day_of_month"] == nil then return "Missing <day_of_month> [1-31]" end
-    if obj["month"] == nil then return "Missing <month> [1-12/JAN-DEC]" end
-    if obj["day_of_week"] == nil then return "Missing <day_of_week> [0-7(Sun, Mo, ..., Sun)/SUN-SAT]" end
+    if obj["minute"] == nil then return "Missing <minute> [0-59 or *]" end
+    if obj["hour"] == nil then return "Missing <hour> [0-23 or *]" end
+    if obj["day_of_month"] == nil then return "Missing <day_of_month> [1-31 or *]" end
+    if obj["month"] == nil then return "Missing <month> [1-12/JAN-DEC or *]" end
+    if obj["day_of_week"] == nil then return "Missing <day_of_week> [0-7/SUN-SAT or *]" end
 
     local minute = obj["minute"]
     local hour = obj["hour"]
     local day_of_month = obj["day_of_month"]
     local month = obj["month"]
     local day_of_week = obj["day_of_week"]
+
+    -- Validate fields
+    local result = validator.validate_minute(minute)
+    if not result.valid then return result.error end
+
+    result = validator.validate_hour(hour)
+    if not result.valid then return result.error end
+
+    result = validator.validate_day_of_month(day_of_month)
+    if not result.valid then return result.error end
+
+    result = validator.validate_month(month)
+    if not result.valid then return result.error end
+
+    result = validator.validate_day_of_week(day_of_week)
+    if not result.valid then return result.error end
 
     local desc = {}
     table.insert(desc, describe_time(minute, hour))
@@ -122,7 +139,7 @@ function describe_day(day_of_month, day_of_week)
     local dom_desc = describe_day_of_month(day_of_month)
     local dow_desc = describe_day_of_week(day_of_week)
 
-    if dom_desc and dow_desc then return "on " .. dom_desc .. " and " .. dow_desc end
+    if dom_desc and dow_desc then return "on " .. dom_desc .. " and on " .. dow_desc end
 
     if dom_desc then return "on " .. dom_desc end
 

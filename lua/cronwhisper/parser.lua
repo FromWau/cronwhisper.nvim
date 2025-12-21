@@ -1,4 +1,3 @@
-local pprint = require "PrettyPrint"
 local utils = require "utils"
 local validator = require "cronwhisper.validator"
 
@@ -72,7 +71,7 @@ function M.parse_cron_line(line)
         table.insert(parts, word)
     end
 
-    if #parts < 1 then return { error = "Missing <minute> [0-59]" } end
+    if #parts < 1 then return { error = "Missing <minute> [0-59 or *]" } end
 
     local result_min = check_actions(parts[1])
     if result_min.error then return { error = result_min.error } end
@@ -89,7 +88,7 @@ function M.parse_cron_line(line)
         if not validate_min.valid then return { error = validate_min.error } end
     end
 
-    if #parts < 2 then return { error = "Missing <hour> [0-23]" } end
+    if #parts < 2 then return { error = "Missing <hour> [0-23 or *]" } end
 
     if parts[1] == "@reboot" then
         return { success = {
@@ -111,7 +110,7 @@ function M.parse_cron_line(line)
     local validate_hour = validator.validate_hour(hour)
     if not validate_hour.valid then return { error = validate_hour.error } end
 
-    if #parts < 3 then return { error = "Missing <day_of_month> [1-31]" } end
+    if #parts < 3 then return { error = "Missing <day_of_month> [1-31 or *]" } end
     local result_day = check_actions(parts[3])
     if result_day.error then return { error = result_day.error } end
 
@@ -125,7 +124,7 @@ function M.parse_cron_line(line)
     local validate_day = validator.validate_day_of_month(day_of_month)
     if not validate_day.valid then return { error = validate_day.error } end
 
-    if #parts < 4 then return { error = "Missing <month> [1-12/JAN-DEC]" } end
+    if #parts < 4 then return { error = "Missing <month> [1-12/JAN-DEC or *]" } end
     local result_month = check_actions(parts[4])
     if result_month.error then return { error = result_month.error } end
 
@@ -139,7 +138,7 @@ function M.parse_cron_line(line)
     local validate_month = validator.validate_month(month)
     if not validate_month.valid then return { error = validate_month.error } end
 
-    if #parts < 5 then return { error = "Missing <day_of_week> [0-7 (Sun, Mo, ..., Sun)/SUN-SAT]" } end
+    if #parts < 5 then return { error = "Missing <day_of_week> [0-7/SUN-SAT or *]" } end
     local result_day_of_week = check_actions(parts[5])
     if result_day_of_week.error then return { error = result_day_of_week.error } end
 

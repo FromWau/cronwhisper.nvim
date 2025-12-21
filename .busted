@@ -6,10 +6,10 @@ return {
     lpath = "./lua/?.lua;./lua/?/init.lua",
   },
   default = {
-    -- Test files in lua/ directory
-    ROOT = { "lua/" },
-    -- Match test.lua instead of default _spec.lua pattern
-    pattern = "test%.lua$",
+    -- Test files in tests/ directory
+    ROOT = { "tests/" },
+    -- Match _spec.lua pattern (busted convention)
+    pattern = "_spec%.lua$",
     -- Verbose output
     verbose = true,
     -- Suppress pending tests output

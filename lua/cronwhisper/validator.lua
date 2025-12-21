@@ -1,5 +1,3 @@
-local pprint = require "PrettyPrint"
-
 local M = {}
 
 ---@param minute table: The parsed minute can either be `value`, `step`, `separator`, or `range`
@@ -30,7 +28,7 @@ function M.validate_minute(minute)
             error_message = "Invalid minute value. Expected a number."
         elseif number < 0 or number > 59 then
             valid = false
-            error_message = "Invalid minute value. Must be between 0 and 59."
+            error_message = "Invalid minute must be between 0 to 59"
         end
     end
 
@@ -175,7 +173,7 @@ function M.validate_hour(hour)
             error_message = "Invalid hour value. Expected a number."
         elseif number < 0 or number > 23 then
             valid = false
-            error_message = "Invalid hour value. Must be between 0 and 23."
+            error_message = "Invalid hour must be between 0 to 23"
         end
     end
 
@@ -279,7 +277,7 @@ function M.validate_day_of_month(day_of_month)
             error_message = "Invalid day_of_month value. Expected a number."
         elseif number < 1 or number > 31 then
             valid = false
-            error_message = "Invalid day_of_month value. Must be between 1 and 31."
+            error_message = "Invalid day_of_month must be between 1 to 31"
         end
     end
 
@@ -355,7 +353,7 @@ function M.validate_month(month)
         if number then
             if number < 1 or number > 12 then
                 valid = false
-                error_message = "Invalid month value. Must be between 1 and 12."
+                error_message = "Invalid month must be between 1 to 12 or JAN to DEC"
                 return { valid = false, error = error_message }
             end
             return { valid = true }
@@ -381,14 +379,14 @@ function M.validate_month(month)
             local x = month_names[str:upper()]
             if not x then
                 valid = false
-                error_message = "Invalid month value. Expected a number or a valid month name."
+                error_message = "Invalid month must be between 1 to 12 or JAN to DEC"
                 return { valid = false, error = error_message }
             end
         end
 
         if not str and not number then
             valid = false
-            error_message = "Invalid month value. Expected a number or a valid month name."
+            error_message = "Invalid month must be between 1 to 12 or JAN to DEC"
         end
     end
 
